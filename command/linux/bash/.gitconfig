@@ -1,0 +1,40 @@
+[user]
+	email = gong_honggao@126.com
+	name = gonghonggao
+[color]
+	ui = true
+[alias]
+	co = checkout
+	ci = commit -a
+	cm = commit -m
+	st = status
+	br = branch
+	di = diff
+	pu = push -u origin master
+	pupage = push origin gh-pages
+    puf = push origin master --force
+	pl = pull
+	line = "log --pretty=oneline --since='two hours ago'"
+	one = log -p -1
+	lg = "log --date=short --graph --pretty=format:'%Cred%h%Creset:[%Cgreen%cn%Creset][%Cgreen%cd%Creset]:%C(bold blue)%s%Creset'"
+    cihd = "commit -C HEAD --amend"
+    cihead = "commit -C HEAD -a --amend"
+    uphead = "commit --amend -m"
+	rshead = "reset --hard HEAD"
+	rs = "reset --hard"
+	rsmaster = "reset --hard origin/master"
+    noadd = "rm -r --cached"
+    noaddall = "rm -r --cached ."
+    bare="init --bare"
+    remoteadd="remote add origin"
+[core]
+	pager = 
+	autocrlf = false
+	editor = /usr/bin/vim
+
+[http]
+	postBuffer = 2077721600
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	required = true

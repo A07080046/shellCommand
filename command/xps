@@ -1,0 +1,40 @@
+#!/bin/bash
+#############################################
+# author:fang
+# version : v1.0
+# name  : xkill
+# dispcripe: windows taskkill
+# CopyRight@fangyunjiang[42550564@qq.com]
+#############################################
+source ~/command/common
+
+
+function cygwin_kill()
+{
+	_list_=($(tasklist|grep -i ".*$1.*\.exe"|awk '{print $1}'))
+ 	__checkbox "" "taskkill /f /im ~~" "yes" "taskkill" "select bellow tasks to kill"
+}
+
+function kill_process() {
+    local process
+    process=${1%%]:*}
+    echo kill -9 ${process##[}
+    kill -9 ${process##[}
+}
+
+function mac_kill()
+{
+    oldIFS=$IFS
+    IFS=$'\n'
+    _list_=($(ps|grep ttys|grep -i ".*$1.*"|grep -v "xps\|grep" |sed 's/\([0-9]*\).*[0-9][0-9].[0-9][0-9] \(.*\)/[\1]: \2\n/'))
+    IFS=$oldIFS
+ 	__checkbox "" "kill_process ~~" "yes" "taskkill" "select bellow tasks to kill"
+}
+
+function main()
+{
+	__mac && mac_kill "$@" || cygwin_kill "$@"
+}
+
+main "$@"
+

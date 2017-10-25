@@ -1,0 +1,115 @@
+#!/bin/bash
+#############################################
+# author:fang
+# version : v1.0
+# name  : xnw
+# dispcripe: expand for node-webkit
+# CopyRight@fangyunjiang[42550564@qq.com]
+#############################################
+source ~/command/common
+
+_jquery_file="/Users/mac/work/stone/trunk/sources/mediaeditor/mp4editor_node/test/js/opengl/thirdparty/jquery-1.9.1.js"
+_name="*"
+_path="."
+_origin_mobile_config=",\"window\": { \"title\": \"MRP客户端\", \"width\": 480, \"height\": 720, \"always-on-top\":false, \"show_in_taskbar\":true, \"transparent\": false, \"resizable\": true, \"frame\": true, \"toolbar\": true, \"show\": true }"
+_mobile_config=""
+_html_file="index.html"
+
+function create_package_file(){
+    echo "{\"main\":\"$_html_file\", \"name\":\"test\"${_mobile_config}}" > "package.json"
+}
+
+function create_html_and_package_file()
+{
+	if ! [ -a "$_html_file" ];then
+		echo "<html>" > "$_html_file"
+		echo "<head>" >> "$_html_file"
+		echo "<title>test</title>" >> "$_html_file"
+		echo "<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">" >> "$_html_file"
+		echo "<script src=\"$_jquery_file\"></script>" >> "$_html_file"
+		echo "<script>" >> "$_html_file"
+		echo "\$(function(){" >> "$_html_file"
+		echo "});" >> "$_html_file"
+		echo "</script>" >> "$_html_file"
+		echo "</head>" >> "$_html_file"
+		echo "<body>" >> "$_html_file"
+		echo "</body>" >> "$_html_file"
+		echo "</html>" >> "$_html_file"
+	else
+		echo "index file have exist"
+	fi
+	create_package_file
+}
+
+function create_package_file_for_url() {
+    local url path nw
+    path=".xnwrun"
+    url="$1"
+    nw="/Users/apple/client/macosx/bin/i32/client.app/Contents/MacOS/node-webkit"
+    url="http://${url#http://}"
+
+    mkdir -p $path
+    echo "{ \"main\": \"${url}\",\"name\": \"debug\"${_mobile_config}}" > ${path}/package.json
+    $nw $path
+    rm -fr $path
+}
+
+function create_express_server() {
+    local dir port
+    dir=${1:-.}
+    port=${2:-3001}
+    echo "var express = require('express');" > server.js
+    echo "var app = express();" >> server.js
+    echo "app.use(express.static('${dir}'));" >> server.js
+    echo "var server = app.listen(${port}, function() {console.log('http://localhost:${port}');});" >>server.js
+}
+
+function show_help()
+{
+	local -a list
+	list="help"
+	list=("${list[@]}" "Usage :xnw [OPTIONS]")
+	list=("${list[@]}" "  -d [path] :set dest path")
+	list=("${list[@]}" "  -n :new html file and package file")
+	list=("${list[@]}" "  -p :new package file")
+	list=("${list[@]}" "  -m :create mobile package file")
+	list=("${list[@]}" "  -l [url]:open nw for a url")
+	list=("${list[@]}" "  -k [file]:new package file with a html name")
+	list=("${list[@]}" "  -s [-i dir[defult:.]|-o port[defult:3001]]: create server file for express")
+	list=("${list[@]}" "  -h :show help ")
+	__msgbox "${list[@]}"
+}
+
+function main()
+{
+	local oper oper_right url dir port
+	oper_right=0
+	while getopts :d:k:l:o:i:snmph opt;do
+		oper_right=1
+		case $opt in
+			d)_path="$OPTARG";;
+			n)oper=0;;
+			p)oper=1;;
+            m)_mobile_config="${_origin_mobile_config}";;
+			k)oper=1;_html_file="$OPTARG";;
+			l)oper=2;url="$OPTARG";;
+			o)port="$OPTARG";;
+			i)dir="$OPTARG";;
+			s)oper=3;;
+			h)show_help;exit;;
+			*)show_help;exit;;
+		esac
+	done
+
+	[ $oper_right -eq 0 ] && show_help && exit
+
+	case $oper in
+		0)create_html_and_package_file;;
+		1)create_package_file;;
+		2)create_package_file_for_url "${url}";;
+        3)create_express_server "${dir}" "${port}";;
+	esac
+}
+
+main "$@"
+

@@ -1,0 +1,65 @@
+#!/bin/bash
+
+source ~/command/common
+
+BREW_INSTALL_PATH="/usr/local/opt/"
+declare -a _apps
+declare -a _app_params
+
+function xbrewSetInstallApps()
+{
+	local i
+	i=0
+	_apps[i]="coreutils"
+	((i++))
+
+	_apps[i]="gawk"
+	_app_params[i]="--with-default-names"
+	((i++))
+
+	_apps[i]="gnu-sed"
+	_app_params[i]="--with-default-names"
+	((i++))
+
+	_apps[i]="findutils"
+	_app_params[i]="--with-default-names"
+	((i++))
+}
+
+function xbrewCheckAppInstalled()
+{
+	local app
+	app=$BREW_INSTALL_PATH/$1
+	[ -d $app ] && return 0
+	return 1
+}
+
+
+function xbrewInstallApps()
+{
+	local var cnt i
+	cnt=${#_apps[@]}
+	__skip_sudo
+	for  ((i=0;i<cnt;i++));do
+		xbrewCheckAppInstalled ${_apps[i]} || brew install ${_apps[i]} ${_app_params[i]}
+	done
+}
+
+function installBrew() {
+	curl -LsSf http://github.com/mxcl/homebrew/tarball/master | sudo tar xvz -C/usr/local --strip 1
+	__skip_sudo
+	sudo chown -R `whoami` /usr/local
+	brew update
+}
+
+function main()
+{
+	if [ -z `which brew` ];then
+		installBrew
+	fi
+	xbrewSetInstallApps
+	xbrewInstallApps
+}
+
+
+main "$@"

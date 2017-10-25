@@ -1,0 +1,97 @@
+#!/usr/local/bin/node
+
+var request = require('superagent');
+var crypto = require('crypto');
+var _ = require('lodash');
+var moment = require('moment');
+var time = moment();
+
+const USER_ID = '5811d3e8e4b0c0b6030dd492';
+const DES_KEY = 'SV#Y!jAz';
+
+function encrypt(text, key) {
+    var cipher = crypto.createCipheriv('des-ecb', key, new Buffer(0));
+    var ciph = cipher.update(text, 'utf8', 'base64');
+    ciph += cipher.final('base64');
+    return ciph;
+}
+
+function decrypt(code, key) {
+    var decipher = crypto.createDecipheriv('des-ecb', key, new Buffer(0));
+    var txt = decipher.update(code, 'base64', 'utf8');
+    txt += decipher.final('utf8');
+    return txt;
+}
+
+function post(api, param) {
+    return new Promise((resolve, reject) => {
+        const req = request
+        .post('http://www.gyyxjqd.com/app/api/' + api)
+        .set({
+            'Accept': 'text/plain',
+            'Content-Type': 'text/plain',
+            'version': 2,
+        })
+        .send(param);
+
+        req.end((error, res) => {
+            if (error) {
+                console.error('recv error:', error);
+                reject();
+            } else {
+                resolve(res.text);
+            }
+        });
+    });
+}
+
+function writeItem(content, callback) {
+    var param = encrypt(JSON.stringify({userID: USER_ID, planDate: time.format('YYYY-MM-DD'), addContent: content, weekNum: time.format('e')}), DES_KEY);
+    post('addTodayPlan', param).then((base64)=>{
+        var json = decrypt(base64, DES_KEY);
+        var obj = JSON.parse(json);
+        var param1 = encrypt(JSON.stringify({userID: USER_ID, id: obj.context.actualWork.id}), DES_KEY);
+        post('finishActualCompleteWork', param1).then(()=>{
+            console.log("完成：", content);
+            callback();
+        });
+    });
+}
+
+function writeAll(list, level) {
+    if (level === list.length) {
+        return;
+    }
+    writeItem(list[level], writeAll.bind(null, list, level+1));
+}
+
+function submitDaySummary(context) {
+    var param = encrypt(JSON.stringify({userID: USER_ID, planDate: time.format('YYYY-MM-DD'), context}), DES_KEY);
+    post('submitDaySummary', param).then((base64)=>{
+        var json = decrypt(base64, DES_KEY);
+        console.log("完成今日总结");
+    });
+}
+
+
+function addProblemAnswer() {
+    var param = encrypt(JSON.stringify({userID: USER_ID, date: time.format('YYYY-MM-DD')}), DES_KEY);
+    var contents = ['认真积极的分析问题，修改应该修改的bug,为项目认真思考逻辑和优化', '修改已知的bug，优化部分功能，跟进react-native的新变化，编写或修改组件', '每天使用赢销截拳道特种兵编写记录工作计划和总结对工作帮助很大，快乐工作'];
+    post('getFixedProblem', param).then((base64)=>{
+        var json = decrypt(base64, DES_KEY);
+        var fixedProblem = JSON.parse(json).context.fixedProblem;
+        for (let i in fixedProblem) {
+            let param1 = encrypt(JSON.stringify({userID: USER_ID, date: time.format('YYYY-MM-DD'), problemId: fixedProblem[i].problemId, problemContent: contents[i]}), DES_KEY);
+            post('addProblemAnswer', param1).then((base64)=>{
+                console.log("完成"+fixedProblem[i].problemTitle);
+            });
+        }
+    });
+}
+
+var args = process.argv.splice(2);
+var summaryIndex = _.indexOf(args, '--summary');
+var summary = _.pullAt(args, summaryIndex,  summaryIndex+1)[1]||'';
+writeAll(args, 0);
+submitDaySummary('今天完成的工作有:'+args.join(';')+'通过今天的工作，我收获很多,'+summary);
+addProblemAnswer();

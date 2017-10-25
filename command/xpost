@@ -1,0 +1,31 @@
+#!/usr/local/bin/node
+const request = require('superagent');
+const program = require('./js/dialog').commander();
+
+program
+.version('0.0.1')
+.option('-u, --url [http://127.0.0.1:3000/test]', 'url of api')
+.option('-d, --data <json>', 'data must be json format', (v)=>eval('v='+v), {})
+.option('-f, --format <json>', 'Accept Format:[json, text]', 'json')
+.parse(process.argv);
+
+const { url, data, format } = program;
+
+request
+.post(url)
+.set({
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+})
+.send(data)
+.end((error, res) => {
+    if (error) {
+        console.error('recv error:', error);
+    } else {
+        if (format === 'json') {
+            console.log(JSON.stringify(res.body, null, 2));
+        } else {
+            console.log(res.text);
+        }
+    }
+});

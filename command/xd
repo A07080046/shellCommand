@@ -1,0 +1,58 @@
+#!/bin/bash
+#############################################
+# author:fang
+# version : v1.0
+# name  : xd
+# dispcripe: uses of log daily
+# CopyRight@fangyunjiang[42550564@qq.com]
+#############################################
+
+source ~/command/common
+file=~/.daily
+his=~/.daily_history
+
+if [ "$1" = "-h" -o "$1"  = "--help" ];then
+    echo ""
+    echo "xd Usage:"
+    echo ""
+    echo "  xd"
+    echo "  xd send"
+    echo "  xd clear"
+    echo "  xd history"
+    echo "  xd summary"
+    echo ""
+    exit
+fi
+
+if [ "$1" = "" ];then
+    cat ${file} 2>/dev/null
+    exit
+fi
+
+if [ "$1" = "history" ];then
+    cat ${his} 2>/dev/null
+    exit
+fi
+
+if [ "$1" = "summary" ];then
+    echo "--summary" >> ${file}
+    exit
+fi
+
+if [ "$1" = "clear" ];then
+    cat ${file} >> ${his}
+    echo -n > ${file}
+    echo "clear success"
+    exit
+fi
+
+if [ "$1" = "send" ];then
+    oldIFS=$IFS
+    IFS=$'\n'
+    xtask `cat ${file}`
+    IFS=$oldIFS
+    exit
+fi
+
+echo "$@" >> ${file}
+
